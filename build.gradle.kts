@@ -24,8 +24,8 @@ dependencies {
 	implementation("org.liquibase:liquibase-core:4.32.0")
 	runtimeOnly("org.postgresql:postgresql")
 
-	testImplementation("org.junit:junit-bom:5.13.3")
-	testImplementation("org.testcontainers:testcontainers-bom:1.21.3")
+	testImplementation(platform("org.junit:junit-bom:5.13.3"))
+	testImplementation(platform("org.testcontainers:testcontainers-bom:1.21.3"))
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
