@@ -13,13 +13,13 @@ public class Utils {
 
     public static ExperimentBuilder experimentBuilder(Experiment e) {
         return new ExperimentBuilder()
-                .id(e.id())
-                .title(e.title())
-                .leadResearcher(e.leadResearcher())
-                .method(e.method())
-                .status(e.status())
-                .category(e.category())
-                .startDate(e.startDate());
+                .id(e.getId())
+                .title(e.getTitle())
+                .leadResearcher(e.getLeadResearcher())
+                .method(e.getMethod())
+                .status(e.getStatus())
+                .category(e.getCategory())
+                .startDate(e.getStartDate());
     }
 
     public static class ExperimentBuilder {

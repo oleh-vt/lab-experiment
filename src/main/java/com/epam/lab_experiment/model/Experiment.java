@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import java.util.Objects;
+
 @Entity
 public class Experiment {
         @Id
@@ -98,5 +100,17 @@ public class Experiment {
 
         public void setStartDate(LocalDate startDate) {
                 this.startDate = startDate;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+                if (o == null || getClass() != o.getClass()) return false;
+                Experiment that = (Experiment) o;
+                return Objects.equals(id, that.id) && Objects.equals(title, that.title) && Objects.equals(leadResearcher, that.leadResearcher) && Objects.equals(method, that.method) && status == that.status && Objects.equals(category, that.category) && Objects.equals(startDate, that.startDate);
+        }
+
+        @Override
+        public int hashCode() {
+                return Objects.hash(id, title, leadResearcher, method, status, category, startDate);
         }
 }

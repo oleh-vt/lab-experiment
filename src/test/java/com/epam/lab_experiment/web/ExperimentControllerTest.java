@@ -3,8 +3,10 @@ package com.epam.lab_experiment.web;
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -14,13 +16,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.doReturn;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ExperimentControllerTest {
 
     private static final String EXPERIMENTS_ENDPOINT = "/experiments";
+    private static final String EXPERIMENT_ID_ENDPOINT = "/experiments/{id}";
 
     @Autowired
     private MockMvc mvc;
@@ -38,6 +42,11 @@ class ExperimentControllerTest {
 
     @MockitoBean
     private ExperimentRepository repository;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.reset(repository);
+    }
 
     @Test
     void contextLoads() throws Exception {
@@ -100,6 +109,54 @@ class ExperimentControllerTest {
                                 ))
                 );
 
+    }
+
+    @DisplayName("When the experiment exists, should update the experiment and return 200 OK")
+    @Test
+    void shouldUpdateExistingExperiment() throws Exception {
+        long id = 1;
+        LocalDate startDate = LocalDate.of(2025, 12, 1);
+
+        Experiment existingExperiment = Utils.experimentBuilder()
+                .id(id)
+                .title("Drug X effect on cancer cells")
+                .leadResearcher("Dr. Alice Morgan")
+                .method("Cell Viability")
+                .status(ExperimentStatus.PLANNED)
+                .category("In Vitro")
+                .build();
+        Experiment updatedExperiment = Utils.experimentBuilder(existingExperiment)
+                .startDate(startDate)
+                .build();
+
+        Experiment requestBody = Utils.experimentBuilder()
+                .startDate(startDate)
+                .build();
+
+        doReturn(Optional.of(existingExperiment)).when(repository).findById(id);
+        doReturn(updatedExperiment).when(repository).save(updatedExperiment);
+
+        mvc.perform(
+                    put(EXPERIMENT_ID_ENDPOINT, id)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(toJson(requestBody))
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().json(toJson(updatedExperiment)));
+    }
+
+    @DisplayName("When experiment id does not exist, should return 404 Not Found")
+    @Test
+    void whenExperimentIdDoesNotExistShouldReturn404NotFound() throws Exception{
+        long id = 1;
+        doReturn(Optional.empty()).when(repository).findById(id);
+
+        mvc.perform(
+                        put(EXPERIMENT_ID_ENDPOINT, id)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(toJson(new Experiment()))
+                )
+                .andExpect(status().isNotFound());
     }
 
     private String toJson(Experiment experiment) {
