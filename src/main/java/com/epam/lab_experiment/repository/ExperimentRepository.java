@@ -1,13 +1,12 @@
 package com.epam.lab_experiment.repository;
 
+
 import com.epam.lab_experiment.model.Experiment;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-public interface ExperimentRepository {
-
-    List<Experiment> findAll();
-
-    Experiment save(Experiment e);
+@Repository
+public interface ExperimentRepository extends CrudRepository<Experiment, Long>, PagingAndSortingRepository<Experiment, Long> {
 
 }

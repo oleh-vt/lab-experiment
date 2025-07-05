@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: lab-experiment
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/research
+    username: user1
+    password: abc123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/liquibase-changelog.xml
