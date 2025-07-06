@@ -1,9 +1,24 @@
 services:
   postgres:
     image: 'postgres:17.5'
+    container_name: 'postgres-db'
     environment:
       - 'POSTGRES_DB=research'
       - 'POSTGRES_PASSWORD=abc123'
       - 'POSTGRES_USER=user1'
     ports:
       - '5432:5432'
+
+  app:
+    build:
+      context: .
+      dockerfile: 'Dockerfile'
+    container_name: 'lab-experiments-app'
+    depends_on:
+      - 'postgres'
+    environment:
+      DATASOURCE_URL: 'jdbc:postgresql://postgres:5432/research'
+      DATASOURCE_USERNAME: 'user1'
+      DATASOURCE_PASSWORD: 'abc123'
+    ports:
+      - "8080:8080"
