@@ -1,7 +1,8 @@
 package com.epam.lab_experiment.web;
 
+import com.epam.lab_experiment.exception.ExperimentNotFoundException;
 import com.epam.lab_experiment.model.Experiment;
-import com.epam.lab_experiment.repository.ExperimentRepository;
+import com.epam.lab_experiment.service.ExperimentService;
 import com.epam.lab_experiment.util.JsonUtil;
 import com.epam.lab_experiment.util.TestDataUtil;
 import org.junit.jupiter.api.DisplayName;
@@ -14,14 +15,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static com.epam.lab_experiment.util.TestDataUtil.*;
 import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
@@ -29,8 +28,7 @@ import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,7 +44,7 @@ class ExperimentControllerTest {
     private JsonUtil jsonUtil;
 
     @MockitoBean
-    private ExperimentRepository repository;
+    private ExperimentService service;
 
     @DisplayName("Should return result with default pagination offset = 0, size = 10, sort = id, DESC")
     @Test
@@ -57,7 +55,7 @@ class ExperimentControllerTest {
         Pageable defaultPagination = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
         doReturn(new PageImpl<>(experiments, defaultPagination, experiments.size()))
-                .when(repository).findAll(any(Specification.class), eq(defaultPagination));
+                .when(service).findAll(any(Experiment.class), eq(defaultPagination));
 
         mvc.perform(get(EXPERIMENTS_ENDPOINT))
                 .andExpect(status().isOk())
@@ -75,7 +73,7 @@ class ExperimentControllerTest {
                 .id(1L)
                 .build();
 
-        doReturn(savedExperiment).when(repository).save(experiment);
+        doReturn(savedExperiment).when(service).save(experiment);
 
         mvc.perform(post(EXPERIMENTS_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -120,8 +118,7 @@ class ExperimentControllerTest {
         long id = 2;
         LocalDate startDate = LocalDate.of(2025, 12, 1);
 
-        Experiment existingExperiment = EXPERIMENT_2;
-        Experiment updatedExperiment = TestDataUtil.experimentBuilder(existingExperiment)
+        Experiment updatedExperiment = TestDataUtil.experimentBuilder(EXPERIMENT_2)
                 .startDate(startDate)
                 .build();
 
@@ -129,8 +126,7 @@ class ExperimentControllerTest {
                 .startDate(startDate)
                 .build();
 
-        doReturn(Optional.of(existingExperiment)).when(repository).findById(id);
-        doReturn(updatedExperiment).when(repository).save(updatedExperiment);
+        doReturn(updatedExperiment).when(service).update(id, requestBody);
 
         mvc.perform(
                 put(EXPERIMENT_ID_ENDPOINT, id)
@@ -144,7 +140,7 @@ class ExperimentControllerTest {
     @DisplayName("When experiment id does not exist, should return 404 Not Found")
     @Test
     void whenExperimentIdDoesNotExistShouldReturn404NotFound() throws Exception{
-        doReturn(Optional.empty()).when(repository).findById(ID);
+        doThrow(new ExperimentNotFoundException(ID)).when(service).update(eq(ID), any(Experiment.class));
 
         mvc.perform(
                 put(EXPERIMENT_ID_ENDPOINT, ID)
@@ -158,11 +154,7 @@ class ExperimentControllerTest {
     @DisplayName("Should delete experiment by id and return 204 No Content")
     @Test
     void shouldDeleteExperimentById() throws Exception {
-        Experiment exp = TestDataUtil.experimentBuilder()
-                .id(ID)
-                .build();
-        doReturn(Optional.of(exp)).when(repository).findById(ID);
-        doNothing().when(repository).delete(exp);
+        doNothing().when(service).delete(ID);
 
         mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, ID))
                 .andExpect(status().isNoContent());
@@ -171,10 +163,9 @@ class ExperimentControllerTest {
     @DisplayName("When experiment does not exist, should return 404 Not Found")
     @Test
     void whenExperimentDoesNotExistShouldReturn404NotFound() throws Exception {
-        long id = 1;
-        doReturn(Optional.empty()).when(repository).findById(id);
+        doThrow(new ExperimentNotFoundException(ID)).when(service).delete(eq(ID));
 
-        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, id))
+        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, ID))
                 .andExpect(status().isNotFound());
     }
 

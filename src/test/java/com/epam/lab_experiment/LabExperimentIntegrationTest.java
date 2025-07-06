@@ -14,15 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDate;
 
@@ -36,19 +31,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ActiveProfiles("test")
 @SpringBootTest
 @Testcontainers
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class LabExperimentIntegrationTest {
-
-    public static final String POSTGRES_IMAGE_NAME = "postgres:17.5";
-
-    private static final String DB_NAME = "testdb";
-    private static final String DB_USER = "test-user";
-    private static final String PASSWORD = "changeit";
+class LabExperimentIntegrationTest extends PostgresTestContainer {
 
     @Autowired
     private ExperimentRepository repository;
@@ -56,14 +44,6 @@ class LabExperimentIntegrationTest {
     private MockMvc mvc;
     @Autowired
     private JsonUtil jsonUtil;
-
-    @Container
-    @ServiceConnection
-    private static final PostgreSQLContainer<?> POSTGRE_SQL_CONTAINER =
-            new PostgreSQLContainer<>(DockerImageName.parse(POSTGRES_IMAGE_NAME))
-                    .withDatabaseName(DB_NAME)
-                    .withUsername(DB_USER)
-                    .withPassword(PASSWORD);
 
     @AfterEach
     void tearDown() {

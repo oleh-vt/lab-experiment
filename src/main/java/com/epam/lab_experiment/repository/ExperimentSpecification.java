@@ -33,7 +33,7 @@ public final class ExperimentSpecification {
             }
 
             if (e.getLeadResearcher() != null) {
-                predicate = criteriaBuilder.and(predicate, criteriaBuilder.like(root.get(LEAD_RESEARCHER), likePattern(e.getLeadResearcher())));
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.like(criteriaBuilder.lower(root.get(LEAD_RESEARCHER)), likePattern(e.getLeadResearcher())));
             }
 
             if (e.getStatus() != null) {

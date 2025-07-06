@@ -22,4 +22,12 @@ public class JsonUtil {
             throw new RuntimeException(e);
         }
     }
+
+    public Experiment fromJson(String json) {
+        try {
+            return jacksonTester.parseObject(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

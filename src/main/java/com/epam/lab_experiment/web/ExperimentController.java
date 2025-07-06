@@ -1,9 +1,9 @@
 package com.epam.lab_experiment.web;
 
 
+import com.epam.lab_experiment.exception.ExperimentNotFoundException;
 import com.epam.lab_experiment.model.Experiment;
-import com.epam.lab_experiment.repository.ExperimentRepository;
-import com.epam.lab_experiment.repository.ExperimentSpecification;
+import com.epam.lab_experiment.service.ExperimentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,23 +17,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("experiments")
 public class ExperimentController {
 
-    private final ExperimentRepository repository;
+    private final ExperimentService experimentService;
 
-    public ExperimentController(ExperimentRepository repository) {
-        this.repository = repository;
+    public ExperimentController(ExperimentService experimentService) {
+        this.experimentService = experimentService;
     }
 
     @Operation(summary = "Create a new experiment")
@@ -63,7 +61,7 @@ public class ExperimentController {
                     content = @Content(schema = @Schema(implementation = Experiment.class))
             )
             @Valid @RequestBody Experiment experiment) {
-        return repository.save(experiment);
+        return experimentService.save(experiment);
     }
 
     @Operation(summary = "Get paginated list of experiments with optional filtering")
@@ -83,7 +81,7 @@ public class ExperimentController {
             @Parameter(description = "Filtering criteria") @ModelAttribute Experiment experiment,
             @Parameter(hidden = true) @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return repository.findAll(ExperimentSpecification.build(experiment), pageable);
+        return experimentService.findAll(experiment, pageable);
     }
 
     @Operation(summary = "Update an existing experiment by ID")
@@ -92,7 +90,7 @@ public class ExperimentController {
             @ApiResponse(responseCode = "404", description = "Experiment not found")
     })
     @PutMapping("{id}")
-    ResponseEntity<Experiment> update(
+    Experiment update(
             @Parameter(description = "ID of the experiment to update")
             @PathVariable
             long id,
@@ -104,14 +102,7 @@ public class ExperimentController {
             @RequestBody
             Experiment experiment
     ) {
-        return repository.findById(id)
-                .map(existing -> {
-                    merge(experiment, existing);
-                    return existing;
-                })
-                .map(repository::save)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return experimentService.update(id, experiment);
     }
 
     @Operation(summary = "Delete an experiment by ID")
@@ -120,12 +111,9 @@ public class ExperimentController {
             @ApiResponse(responseCode = "404", description = "Experiment not found")
     })
     @DeleteMapping("{id}")
-    ResponseEntity<?> delete(@Parameter(description = "ID of the experiment to delete") @PathVariable long id) {
-        return repository.findById(id)
-                .map(exp -> {
-                    repository.delete(exp);
-                    return ResponseEntity.noContent().build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@Parameter(description = "ID of the experiment to delete") @PathVariable long id) {
+        experimentService.delete(id);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -136,17 +124,9 @@ public class ExperimentController {
                 .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
     }
 
-    private void merge(Experiment update, Experiment existing) {
-        Optional.ofNullable(update.getTitle())
-                .ifPresent(existing::setTitle);
-        Optional.ofNullable(update.getLeadResearcher())
-                .ifPresent(existing::setLeadResearcher);
-        Optional.ofNullable(update.getMethod())
-                .ifPresent(existing::setMethod);
-        Optional.ofNullable(update.getCategory())
-                .ifPresent(existing::setCategory);
-        Optional.ofNullable(update.getStatus())
-                .ifPresent(existing::setStatus);
-        existing.setStartDate(update.getStartDate());
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ExperimentNotFoundException.class)
+    public Map<String, String> handleNotFoundExceptions(ExperimentNotFoundException ex) {
+        return Map.of("message", ex.getMessage());
     }
 }
