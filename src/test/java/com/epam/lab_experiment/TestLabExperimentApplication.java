@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 public class TestLabExperimentApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.from(LabExperimentApplication::main).with(TestcontainersConfiguration.class).run(args);
+		SpringApplication.from(LabExperimentApplication::main).with(LabExperimentIntegrationTest.class).run(args);
 	}
 
 }

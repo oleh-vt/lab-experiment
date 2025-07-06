@@ -1,14 +1,15 @@
 package com.epam.lab_experiment.web;
 
 import com.epam.lab_experiment.model.Experiment;
-import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
+import com.epam.lab_experiment.util.JsonUtil;
+import com.epam.lab_experiment.util.TestDataUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.json.JacksonTester;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +19,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static com.epam.lab_experiment.util.TestDataUtil.*;
+import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
+import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,16 +36,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @AutoConfigureJsonTesters
 @WebMvcTest(ExperimentController.class)
+@ComponentScan(basePackages = "com.epam.lab_experiment")
 class ExperimentControllerTest {
-
-    private static final String EXPERIMENTS_ENDPOINT = "/experiments";
-    private static final String EXPERIMENT_ID_ENDPOINT = "/experiments/{id}";
 
     @Autowired
     private MockMvc mvc;
 
     @Autowired
-    private JacksonTester<Experiment> jacksonTester;
+    private JsonUtil jsonUtil;
 
     @MockitoBean
     private ExperimentRepository repository;
@@ -50,7 +51,7 @@ class ExperimentControllerTest {
     @DisplayName("Should return result with default pagination offset = 0, size = 10, sort = id, DESC")
     @Test
     void shouldReturnPagedResult() throws Exception {
-        List<Experiment> experiments = sampleExperiments();
+        List<Experiment> experiments = List.of(EXPERIMENT_1, EXPERIMENT_2);
         int pageNumber = 0;
         int pageSize = 10;
         Pageable defaultPagination = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
@@ -68,15 +69,9 @@ class ExperimentControllerTest {
     @DisplayName("Should return 201 Created and the saved experiment")
     @Test
     void shouldReturn201CreatedAndTheSavedExperiment() throws Exception {
-        Experiment experiment = Utils.experimentBuilder()
-                .title("Drug X effect on cancer cells")
-                .leadResearcher("Dr. Alice Morgan")
-                .method("Cell Viability")
-                .status(ExperimentStatus.PLANNED)
-                .category("In Vitro")
-                .build();
+        Experiment experiment = UNSAVED_EXPERIMENT;
 
-        Experiment savedExperiment = Utils.experimentBuilder(experiment)
+        Experiment savedExperiment = TestDataUtil.experimentBuilder(experiment)
                 .id(1L)
                 .build();
 
@@ -84,16 +79,16 @@ class ExperimentControllerTest {
 
         mvc.perform(post(EXPERIMENTS_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(toJson(experiment))
+                        .content(jsonUtil.toJson(experiment))
                 )
                 .andExpect(status().isCreated())
-                .andExpect(content().json(toJson(savedExperiment)));
+                .andExpect(content().json(jsonUtil.toJson(savedExperiment)));
     }
 
     @DisplayName("When required fields not provided, should return 400 Bad Request and validation message")
     @Test
     void shouldReturn400BadRequestWhenMandatoryFieldsNotProvided() throws Exception {
-        Experiment experiment = Utils.experimentBuilder()
+        Experiment experiment = TestDataUtil.experimentBuilder()
                 .title("  ")
                 .leadResearcher("")
                 .method(null)
@@ -103,7 +98,7 @@ class ExperimentControllerTest {
 
         mvc.perform(post(EXPERIMENTS_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(toJson(experiment))
+                        .content(jsonUtil.toJson(experiment))
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(
@@ -122,22 +117,15 @@ class ExperimentControllerTest {
     @DisplayName("When the experiment exists, should update the experiment and return 200 OK")
     @Test
     void shouldUpdateExistingExperiment() throws Exception {
-        long id = 1;
+        long id = 2;
         LocalDate startDate = LocalDate.of(2025, 12, 1);
 
-        Experiment existingExperiment = Utils.experimentBuilder()
-                .id(id)
-                .title("Drug X effect on cancer cells")
-                .leadResearcher("Dr. Alice Morgan")
-                .method("Cell Viability")
-                .status(ExperimentStatus.PLANNED)
-                .category("In Vitro")
-                .build();
-        Experiment updatedExperiment = Utils.experimentBuilder(existingExperiment)
+        Experiment existingExperiment = EXPERIMENT_2;
+        Experiment updatedExperiment = TestDataUtil.experimentBuilder(existingExperiment)
                 .startDate(startDate)
                 .build();
 
-        Experiment requestBody = Utils.experimentBuilder()
+        Experiment requestBody = TestDataUtil.experimentBuilder()
                 .startDate(startDate)
                 .build();
 
@@ -147,10 +135,10 @@ class ExperimentControllerTest {
         mvc.perform(
                 put(EXPERIMENT_ID_ENDPOINT, id)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(toJson(requestBody))
+                        .content(jsonUtil.toJson(requestBody))
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().json(toJson(updatedExperiment)));
+                .andExpect(content().json(jsonUtil.toJson(updatedExperiment)));
     }
 
     @DisplayName("When experiment id does not exist, should return 404 Not Found")
@@ -162,7 +150,7 @@ class ExperimentControllerTest {
         mvc.perform(
                 put(EXPERIMENT_ID_ENDPOINT, id)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(toJson(new Experiment()))
+                        .content(jsonUtil.toJson(new Experiment()))
                 )
                 .andExpect(status().isNotFound());
     }
@@ -172,7 +160,7 @@ class ExperimentControllerTest {
     @Test
     void shouldDeleteExperimentById() throws Exception {
         long id = 1;
-        Experiment exp = Utils.experimentBuilder()
+        Experiment exp = TestDataUtil.experimentBuilder()
                 .id(id)
                 .build();
         doReturn(Optional.of(exp)).when(repository).findById(id);
@@ -190,38 +178,6 @@ class ExperimentControllerTest {
 
         mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, id))
                 .andExpect(status().isNotFound());
-    }
-
-    private String toJson(Experiment experiment) {
-        try {
-            return jacksonTester.write(experiment).getJson();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private List<Experiment> sampleExperiments() {
-        Experiment exp1 = Utils.experimentBuilder()
-                .id(1L)
-                .title("COVID-19 Vaccine Efficacy Study")
-                .leadResearcher("Dr. Lena Hofmann")
-                .method("Randomized Control Trial")
-                .status(ExperimentStatus.COMPLETED)
-                .category("Immunology")
-                .startDate(LocalDate.of(2024, 11, 20))
-                .build();
-
-        Experiment exp2 = Utils.experimentBuilder()
-                .id(2L)
-                .title("Protein Folding Simulation")
-                .leadResearcher("Dr. Alice Morgan")
-                .method("Molecular Dynamics")
-                .status(ExperimentStatus.PLANNED)
-                .category("Biophysics")
-                .startDate(LocalDate.of(2025, 9, 1))
-                .build();
-
-        return List.of(exp1, exp2);
     }
 
 }
