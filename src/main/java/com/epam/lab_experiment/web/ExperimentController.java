@@ -3,7 +3,12 @@ package com.epam.lab_experiment.web;
 
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.repository.ExperimentRepository;
+import com.epam.lab_experiment.repository.ExperimentSpecification;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -30,9 +35,13 @@ public class ExperimentController {
         return repository.save(experiment);
     }
 
-    @GetMapping
-    Iterable<Experiment> getExperiments() {
-        return repository.findAll();
+    @GetMapping()
+    Page<Experiment> getExperiments(
+            @ModelAttribute Experiment experiment,
+            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<Experiment> all = repository.findAll(ExperimentSpecification.build(experiment), pageable);
+        return all;
     }
 
     @PutMapping("{id}")

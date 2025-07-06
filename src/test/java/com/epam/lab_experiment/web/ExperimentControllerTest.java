@@ -3,29 +3,32 @@ package com.epam.lab_experiment.web;
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.json.JacksonTester;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @AutoConfigureJsonTesters
 @WebMvcTest(ExperimentController.class)
@@ -43,18 +46,22 @@ class ExperimentControllerTest {
     @MockitoBean
     private ExperimentRepository repository;
 
-    @BeforeEach
-    void setUp() {
-        Mockito.reset(repository);
-    }
-
+    @DisplayName("Should return result with default pagination offset = 0, size = 10, sort = id, DESC")
     @Test
-    void contextLoads() throws Exception {
-        doReturn(Collections.emptyList()).when(repository).findAll();
+    void shouldReturnPagedResult() throws Exception {
+        List<Experiment> experiments = sampleExperiments();
+        int pageNumber = 0;
+        int pageSize = 10;
+        Pageable defaultPagination = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+
+        doReturn(new PageImpl<>(experiments, defaultPagination, experiments.size()))
+                .when(repository).findAll(any(Specification.class), eq(defaultPagination));
 
         mvc.perform(get(EXPERIMENTS_ENDPOINT))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+                .andExpect(jsonPath("$.content", hasSize(experiments.size())))
+                .andExpect(jsonPath("$.number").value(pageNumber))
+                .andExpect(jsonPath("$.size").value(pageSize));
     }
 
     @DisplayName("Should return 201 Created and the saved experiment")
@@ -137,7 +144,7 @@ class ExperimentControllerTest {
         doReturn(updatedExperiment).when(repository).save(updatedExperiment);
 
         mvc.perform(
-                    put(EXPERIMENT_ID_ENDPOINT, id)
+                put(EXPERIMENT_ID_ENDPOINT, id)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(toJson(requestBody))
                 )
@@ -152,9 +159,9 @@ class ExperimentControllerTest {
         doReturn(Optional.empty()).when(repository).findById(id);
 
         mvc.perform(
-                        put(EXPERIMENT_ID_ENDPOINT, id)
-                                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                                .content(toJson(new Experiment()))
+                put(EXPERIMENT_ID_ENDPOINT, id)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(toJson(new Experiment()))
                 )
                 .andExpect(status().isNotFound());
     }
@@ -165,6 +172,30 @@ class ExperimentControllerTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<Experiment> sampleExperiments() {
+        Experiment exp1 = Utils.experimentBuilder()
+                .id(1L)
+                .title("COVID-19 Vaccine Efficacy Study")
+                .leadResearcher("Dr. Lena Hofmann")
+                .method("Randomized Control Trial")
+                .status(ExperimentStatus.COMPLETED)
+                .category("Immunology")
+                .startDate(LocalDate.of(2024, 11, 20))
+                .build();
+
+        Experiment exp2 = Utils.experimentBuilder()
+                .id(2L)
+                .title("Protein Folding Simulation")
+                .leadResearcher("Dr. Alice Morgan")
+                .method("Molecular Dynamics")
+                .status(ExperimentStatus.PLANNED)
+                .category("Biophysics")
+                .startDate(LocalDate.of(2025, 9, 1))
+                .build();
+
+        return List.of(exp1, exp2);
     }
 
 }
