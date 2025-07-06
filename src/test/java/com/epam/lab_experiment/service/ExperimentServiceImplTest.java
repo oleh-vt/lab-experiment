@@ -3,7 +3,9 @@ package com.epam.lab_experiment.service;
 import com.epam.lab_experiment.PostgresTestContainer;
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.util.JsonUtil;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,13 +15,17 @@ import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 @DataJpaTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -39,6 +45,14 @@ class ExperimentServiceImplTest extends PostgresTestContainer {
 
     @Autowired
     private JsonUtil jsonUtil;
+
+    @MockitoBean
+    private Validator validator;
+
+    @BeforeEach
+    void setUp() {
+        doReturn(Collections.emptySet()).when(validator).validate(any(Experiment.class));
+    }
 
     @BeforeAll
     void seedDatabaseOnce() throws Exception {
@@ -65,7 +79,7 @@ class ExperimentServiceImplTest extends PostgresTestContainer {
             "{ \"status\": \"ONGOING\" },           2",
             "{ \"startDate\": \"2025-10-01\" },     1"
     })
-    void name(String updateJson, long expectedRecordId) {
+    void shouldReturnFilteredResults(String updateJson, long expectedRecordId) {
 
         Experiment filter = jsonUtil.fromJson(updateJson);
 

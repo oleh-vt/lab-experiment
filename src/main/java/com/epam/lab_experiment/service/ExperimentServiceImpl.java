@@ -4,19 +4,25 @@ import com.epam.lab_experiment.exception.ExperimentNotFoundException;
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.repository.ExperimentRepository;
 import com.epam.lab_experiment.repository.ExperimentSpecification;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ExperimentServiceImpl implements ExperimentService {
 
     private final ExperimentRepository repository;
+    private final Validator validator;
 
-    public ExperimentServiceImpl(ExperimentRepository repository) {
+    public ExperimentServiceImpl(ExperimentRepository repository, Validator validator) {
         this.repository = repository;
+        this.validator = validator;
     }
 
     @Override
@@ -28,6 +34,7 @@ public class ExperimentServiceImpl implements ExperimentService {
     public Experiment update(long id, Experiment update) {
         Experiment existing = findOrThrow(id);
         merge(update, existing);
+        validate(existing);
         return save(existing);
     }
 
@@ -57,6 +64,13 @@ public class ExperimentServiceImpl implements ExperimentService {
         Optional.ofNullable(update.getStatus())
                 .ifPresent(existing::setStatus);
         existing.setStartDate(update.getStartDate());
+    }
+
+    private void validate(Experiment e) {
+        Set<ConstraintViolation<Experiment>> violations = validator.validate(e);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
     }
 
 }

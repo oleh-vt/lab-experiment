@@ -11,6 +11,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -122,6 +125,24 @@ public class ExperimentController {
         return ex.getBindingResult().getAllErrors().stream()
                 .map(FieldError.class::cast)
                 .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Map<String, String> handleValidationExceptions(ConstraintViolationException ex) {
+
+        return ex.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        v -> {
+                            Path path = v.getPropertyPath();
+                            String name = null;
+                            for (Path.Node node : path) {
+                                name = node.getName();
+                            }
+                            return name;
+                        },
+                        ConstraintViolation::getMessage
+                ));
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
