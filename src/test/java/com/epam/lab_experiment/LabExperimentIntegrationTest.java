@@ -5,6 +5,7 @@ import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
 import com.epam.lab_experiment.util.JsonUtil;
 import com.epam.lab_experiment.util.TestDataUtil;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,9 @@ import static com.epam.lab_experiment.util.TestDataUtil.UNSAVED_EXPERIMENT;
 import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
 import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -139,5 +142,34 @@ class LabExperimentIntegrationTest {
                 .andExpect(status().isNoContent());
 
         assertThat(repository.count()).isZero();
+    }
+
+    @DisplayName("Should retrieve paged experiment records")
+    @Sql("/test-data/multi-record.sql")
+    @Test
+    void shouldRetrievePagedExperimentRecords() throws Exception {
+        int page = 0;
+        int size = 2;
+        mvc.perform(get(EXPERIMENTS_ENDPOINT + "?page={page}&size={size}", page, size))
+                .andExpect(status().isOk())
+                .andExpectAll(
+                        jsonPath("$.content", hasSize(size)),
+                        jsonPath("$.totalElements", Matchers.equalTo(5)),
+                        jsonPath("$.totalPages", Matchers.equalTo(3))
+                );
+    }
+
+    @DisplayName("Should retrieve filtered experiment records")
+    @Sql("/test-data/multi-record.sql")
+    @Test
+    void shouldRetrieveFilteredExperimentRecords() throws Exception {
+        var category = "Immunology";
+        var status = ExperimentStatus.PLANNED;
+        mvc.perform(get(EXPERIMENTS_ENDPOINT + "?category={category}&status={status}", category, status))
+                .andExpect(status().isOk())
+                .andExpectAll(
+                        jsonPath("$.content", hasSize(1)),
+                        jsonPath("$.content[0].id", Matchers.equalTo(1))
+                );
     }
 }
