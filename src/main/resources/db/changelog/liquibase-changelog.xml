@@ -30,4 +30,21 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="demo-data" author="otkachuk" context="!test">
+        <sql>
+            INSERT INTO experiment (id, title, lead_researcher, method, category, status, start_date)
+            VALUES
+            (1, 'Vaccine Study', 'Dr. Alice', 'double-blind', 'Immunology', 'PLANNED', '2025-09-15'),
+            (2, 'Biomarker Analysis', 'Dr. Bob', 'case-control', 'Oncology', 'ONGOING', '2024-11-01'),
+            (3, 'Drug Response', 'Dr. Carol', 'randomized', 'Endocrinology', 'COMPLETED', '2021-07-20'),
+            (4, 'Compound Screening', 'Dr. Dan', 'in-vitro', 'Virology', 'PLANNED', '2026-03-05'),
+            (5, 'Inflammation Pathway Mapping', 'Dr. Eve', 'observational', 'Immunology', 'COMPLETED', '2024-01-30'),
+            (6, 'Autoimmune Disease Study', 'Dr. Frank', 'observational', 'Immunology', 'ONGOING', '2025-02-10'),
+            (7, 'Lung Immunotherapy Trial', 'Dr. Grace', 'double-blind', 'Oncology', 'PLANNED', '2025-08-01'),
+            (8, 'Virus Variant Response', 'Dr. Heidi', 'in-vitro', 'Virology', 'COMPLETED', '2024-12-18'),
+            (9, 'Insulin Resistance Screening', 'Dr. Ian', 'randomized', 'Endocrinology', 'CANCELLED', '2024-11-05'),
+            (10, 'Gene Expression Profiling', 'Dr. Jane', 'case-control', 'Oncology', 'ONGOING', '2024-09-23');
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

@@ -7,6 +7,6 @@ in the ```lab-experiment``` directory
 ./gradlew clean build
 docker-compose up --build
 ```
-The application should be accessible at http://localhost:8080
+The application will be accessible at http://localhost:8080 with preloaded demo data.
 
 Swagger UI: http://localhost:8080/swagger-ui/index.html
