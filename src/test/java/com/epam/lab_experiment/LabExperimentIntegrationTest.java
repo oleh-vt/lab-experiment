@@ -1,8 +1,11 @@
 package com.epam.lab_experiment;
 
 import com.epam.lab_experiment.model.Experiment;
+import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
 import com.epam.lab_experiment.util.JsonUtil;
+import com.epam.lab_experiment.util.TestDataUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -12,16 +15,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.LocalDate;
+
+import static com.epam.lab_experiment.util.TestDataUtil.ID;
 import static com.epam.lab_experiment.util.TestDataUtil.UNSAVED_EXPERIMENT;
 import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
+import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -53,7 +61,12 @@ class LabExperimentIntegrationTest {
                     .withUsername(DB_USER)
                     .withPassword(PASSWORD);
 
-    @DisplayName("Should save a new experiment record to database")
+    @AfterEach
+    void tearDown() {
+        repository.deleteAll();
+    }
+
+    @DisplayName("Should save a new experiment record")
     @Test
     void shouldSaveExperimentToDatabase() throws Exception {
         Experiment experiment = UNSAVED_EXPERIMENT;
@@ -77,6 +90,54 @@ class LabExperimentIntegrationTest {
                     assertThat(exp.getStatus()).isEqualTo(experiment.getStatus());
                     assertThat(exp.getStartDate()).isEqualTo(experiment.getStartDate());
                 });
+    }
 
+    @DisplayName("Should update existing experiment record")
+    @Sql("/test-data/single-record.sql")
+    @Test
+    void shouldUpdateExistingExperimentRecord() throws Exception {
+        var title = "Inflammation Pathway Mapping";
+        var method = "observational";
+        var category = "Immunology";
+
+        var newDate = LocalDate.of(2026, 1, 15);
+        var newStatus = ExperimentStatus.PLANNED;
+        var newResearcher = "Dr. J. Doe";
+
+        Experiment experimentUpdate = TestDataUtil.experimentBuilder()
+                .leadResearcher(newResearcher)
+                .status(newStatus)
+                .startDate(newDate)
+                .build();
+
+        mvc.perform(
+                put(EXPERIMENT_ID_ENDPOINT, ID)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(jsonUtil.toJson(experimentUpdate))
+        ).andExpect(status().isOk());
+
+        Experiment updatedExperiment = repository.findById(ID).get();
+
+        assertThat(updatedExperiment)
+                .satisfies(exp -> {
+                    assertThat(exp.getId()).isEqualTo(ID);
+                    assertThat(exp.getTitle()).isEqualTo(title);
+                    assertThat(exp.getLeadResearcher()).isEqualTo(newResearcher);
+                    assertThat(exp.getMethod()).isEqualTo(method);
+                    assertThat(exp.getCategory()).isEqualTo(category);
+                    assertThat(exp.getStatus()).isEqualTo(newStatus);
+                    assertThat(exp.getStartDate()).isEqualTo(newDate);
+                });
+    }
+
+    @DisplayName("Should remove existing experiment record")
+    @Sql("/test-data/single-record.sql")
+    @Test
+    void shouldRemoveExperimentRecord() throws Exception {
+
+        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, ID))
+                .andExpect(status().isNoContent());
+
+        assertThat(repository.count()).isZero();
     }
 }

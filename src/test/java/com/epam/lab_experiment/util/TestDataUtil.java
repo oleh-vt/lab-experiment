@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 public final class TestDataUtil {
 
+    public static final long ID = 1L;
+
     public static final Experiment EXPERIMENT_1 = experimentBuilder()
             .id(1L)
             .title("COVID-19 Vaccine Efficacy Study")

@@ -144,11 +144,10 @@ class ExperimentControllerTest {
     @DisplayName("When experiment id does not exist, should return 404 Not Found")
     @Test
     void whenExperimentIdDoesNotExistShouldReturn404NotFound() throws Exception{
-        long id = 1;
-        doReturn(Optional.empty()).when(repository).findById(id);
+        doReturn(Optional.empty()).when(repository).findById(ID);
 
         mvc.perform(
-                put(EXPERIMENT_ID_ENDPOINT, id)
+                put(EXPERIMENT_ID_ENDPOINT, ID)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(jsonUtil.toJson(new Experiment()))
                 )
@@ -159,14 +158,13 @@ class ExperimentControllerTest {
     @DisplayName("Should delete experiment by id and return 204 No Content")
     @Test
     void shouldDeleteExperimentById() throws Exception {
-        long id = 1;
         Experiment exp = TestDataUtil.experimentBuilder()
-                .id(id)
+                .id(ID)
                 .build();
-        doReturn(Optional.of(exp)).when(repository).findById(id);
+        doReturn(Optional.of(exp)).when(repository).findById(ID);
         doNothing().when(repository).delete(exp);
 
-        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, id))
+        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, ID))
                 .andExpect(status().isNoContent());
     }
 

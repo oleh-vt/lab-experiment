@@ -2,7 +2,7 @@ package com.epam.lab_experiment.model;
 
 public enum ExperimentStatus {
     PLANNED,
-    RUNNING,
+    ONGOING,
     COMPLETED,
     CANCELLED
 }
