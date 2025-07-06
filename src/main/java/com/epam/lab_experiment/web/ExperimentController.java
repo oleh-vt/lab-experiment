@@ -35,13 +35,12 @@ public class ExperimentController {
         return repository.save(experiment);
     }
 
-    @GetMapping()
+    @GetMapping
     Page<Experiment> getExperiments(
             @ModelAttribute Experiment experiment,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<Experiment> all = repository.findAll(ExperimentSpecification.build(experiment), pageable);
-        return all;
+        return repository.findAll(ExperimentSpecification.build(experiment), pageable);
     }
 
     @PutMapping("{id}")
@@ -54,6 +53,15 @@ public class ExperimentController {
                 .map(repository::save)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("{id}")
+    ResponseEntity<?> delete(@PathVariable long id) {
+        return repository.findById(id)
+                .map(exp -> {
+                    repository.delete(exp);
+                    return ResponseEntity.noContent().build();
+                }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

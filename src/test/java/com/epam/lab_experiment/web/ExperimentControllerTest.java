@@ -26,6 +26,7 @@ import java.util.Optional;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -163,6 +164,31 @@ class ExperimentControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(toJson(new Experiment()))
                 )
+                .andExpect(status().isNotFound());
+    }
+
+
+    @DisplayName("Should delete experiment by id and return 204 No Content")
+    @Test
+    void shouldDeleteExperimentById() throws Exception {
+        long id = 1;
+        Experiment exp = Utils.experimentBuilder()
+                .id(id)
+                .build();
+        doReturn(Optional.of(exp)).when(repository).findById(id);
+        doNothing().when(repository).delete(exp);
+
+        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, id))
+                .andExpect(status().isNoContent());
+    }
+
+    @DisplayName("When experiment does not exist, should return 404 Not Found")
+    @Test
+    void whenExperimentDoesNotExistShouldReturn404NotFound() throws Exception {
+        long id = 1;
+        doReturn(Optional.empty()).when(repository).findById(id);
+
+        mvc.perform(delete(EXPERIMENT_ID_ENDPOINT, id))
                 .andExpect(status().isNotFound());
     }
 
