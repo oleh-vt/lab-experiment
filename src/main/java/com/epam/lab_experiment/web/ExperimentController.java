@@ -70,17 +70,17 @@ public class ExperimentController {
     @Parameter(name = "title", description = "Title text search filter")
     @Parameter(name = "leadResearcher", description = "Title text Lead Researcher")
     @Parameter(name = "method")
-    @Parameter(name = "status")
+    @Parameter(name = "status", description = "Allowed values: PLANNED, ONGOING, COMPLETE, CANCELLED")
     @Parameter(name = "category")
     @Parameter(name = "startDate", description = "Start date equal to or greater than")
     @ApiResponse(
             responseCode = "200",
             description = "List of experiments",
-            content = @Content(schema = @Schema(implementation = Page.class))
+            content = @Content(schema = @Schema(implementation = PagedResponse.class))
     )
     @GetMapping
     PagedResponse<Experiment> getExperiments(
-            @Parameter(description = "Filtering criteria") @ModelAttribute Experiment experiment,
+            @Parameter(hidden = true) @ModelAttribute Experiment experiment,
             @Parameter(hidden = true) @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return toPagedResponse(experimentService.findAll(experiment, pageable));
