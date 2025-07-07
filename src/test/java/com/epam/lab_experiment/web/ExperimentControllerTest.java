@@ -61,9 +61,14 @@ class ExperimentControllerTest {
 
         mvc.perform(get(EXPERIMENTS_ENDPOINT))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(experiments.size())))
-                .andExpect(jsonPath("$.number").value(pageNumber))
-                .andExpect(jsonPath("$.size").value(pageSize));
+                .andExpectAll(
+                        jsonPath("$.content", hasSize(experiments.size())),
+                        jsonPath("$.page", equalTo(pageNumber)),
+                        jsonPath("$.size", equalTo(pageSize)),
+                        jsonPath("$.totalPages", equalTo(1)),
+                        jsonPath("$.totalElements", equalTo(experiments.size()))
+        );
+
     }
 
     @DisplayName("Should return 201 Created and the saved experiment")

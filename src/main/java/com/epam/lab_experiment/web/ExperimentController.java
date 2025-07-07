@@ -4,6 +4,7 @@ package com.epam.lab_experiment.web;
 import com.epam.lab_experiment.exception.ExperimentNotFoundException;
 import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.service.ExperimentService;
+import com.epam.lab_experiment.web.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -80,11 +81,11 @@ public class ExperimentController {
             content = @Content(schema = @Schema(implementation = Page.class))
     )
     @GetMapping
-    Page<Experiment> getExperiments(
+    PagedResponse<Experiment> getExperiments(
             @Parameter(description = "Filtering criteria") @ModelAttribute Experiment experiment,
             @Parameter(hidden = true) @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return experimentService.findAll(experiment, pageable);
+        return toPagedResponse(experimentService.findAll(experiment, pageable));
     }
 
     @Operation(summary = "Update an existing experiment by ID")
@@ -149,5 +150,15 @@ public class ExperimentController {
     @ExceptionHandler(ExperimentNotFoundException.class)
     public Map<String, String> handleNotFoundExceptions(ExperimentNotFoundException ex) {
         return Map.of("message", ex.getMessage());
+    }
+
+    private PagedResponse<Experiment> toPagedResponse(Page<Experiment> page) {
+        return new PagedResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
     }
 }
