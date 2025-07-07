@@ -1,19 +1,17 @@
 package com.epam.lab_experiment.util;
 
 import com.epam.lab_experiment.model.Experiment;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class JsonUtil {
 
     private final JacksonTester<Experiment> jacksonTester;
-
-    public JsonUtil(JacksonTester<Experiment> jacksonTester) {
-        this.jacksonTester = jacksonTester;
-    }
 
     public String toJson(Experiment exp) {
         try {

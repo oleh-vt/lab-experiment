@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.epam.lab_experiment.util.TestDataUtil.*;
-import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
-import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -76,7 +74,7 @@ class ExperimentControllerTest {
     void shouldReturn201CreatedAndTheSavedExperiment() throws Exception {
         Experiment experiment = UNSAVED_EXPERIMENT;
 
-        Experiment savedExperiment = TestDataUtil.experimentBuilder(experiment)
+        Experiment savedExperiment = TestDataUtil.toBuilder(experiment)
                 .id(1L)
                 .build();
 
@@ -93,7 +91,7 @@ class ExperimentControllerTest {
     @DisplayName("When required fields not provided, should return 400 Bad Request and validation message")
     @Test
     void shouldReturn400BadRequestWhenMandatoryFieldsNotProvided() throws Exception {
-        Experiment experiment = TestDataUtil.experimentBuilder()
+        Experiment experiment = Experiment.builder()
                 .title("  ")
                 .leadResearcher("")
                 .method(null)
@@ -124,11 +122,11 @@ class ExperimentControllerTest {
         long id = 2;
         LocalDate startDate = LocalDate.of(2025, 12, 1);
 
-        Experiment updatedExperiment = TestDataUtil.experimentBuilder(EXPERIMENT_2)
+        Experiment updatedExperiment = TestDataUtil.toBuilder(EXPERIMENT_2)
                 .startDate(startDate)
                 .build();
 
-        Experiment requestBody = TestDataUtil.experimentBuilder()
+        Experiment requestBody = Experiment.builder()
                 .startDate(startDate)
                 .build();
 
@@ -190,7 +188,7 @@ class ExperimentControllerTest {
     }
 
     private Set<ConstraintViolation<Experiment>> createConstraintViolations() {
-        Experiment exp = TestDataUtil.experimentBuilder(EXPERIMENT_1)
+        Experiment exp = TestDataUtil.toBuilder(EXPERIMENT_1)
                 .title("  ")
                 .method(null)
                 .build();

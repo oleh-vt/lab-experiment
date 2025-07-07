@@ -4,7 +4,6 @@ import com.epam.lab_experiment.model.Experiment;
 import com.epam.lab_experiment.model.ExperimentStatus;
 import com.epam.lab_experiment.repository.ExperimentRepository;
 import com.epam.lab_experiment.util.JsonUtil;
-import com.epam.lab_experiment.util.TestDataUtil;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,10 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
-import static com.epam.lab_experiment.util.TestDataUtil.ID;
-import static com.epam.lab_experiment.util.TestDataUtil.UNSAVED_EXPERIMENT;
-import static com.epam.lab_experiment.web.Utils.EXPERIMENTS_ENDPOINT;
-import static com.epam.lab_experiment.web.Utils.EXPERIMENT_ID_ENDPOINT;
+import static com.epam.lab_experiment.util.TestDataUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -88,7 +84,7 @@ class LabExperimentIntegrationTest extends PostgresTestContainer {
         var newStatus = ExperimentStatus.PLANNED;
         var newResearcher = "Dr. J. Doe";
 
-        Experiment experimentUpdate = TestDataUtil.experimentBuilder()
+        Experiment experimentUpdate = Experiment.builder()
                 .leadResearcher(newResearcher)
                 .status(newStatus)
                 .startDate(newDate)

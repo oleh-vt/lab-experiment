@@ -16,6 +16,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -28,15 +29,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("experiments")
 public class ExperimentController {
 
     private final ExperimentService experimentService;
-
-    public ExperimentController(ExperimentService experimentService) {
-        this.experimentService = experimentService;
-    }
 
     @Operation(summary = "Create a new experiment")
     @ApiResponse(

@@ -7,6 +7,7 @@ import com.epam.lab_experiment.repository.ExperimentSpecification;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,15 +16,11 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class ExperimentServiceImpl implements ExperimentService {
 
     private final ExperimentRepository repository;
     private final Validator validator;
-
-    public ExperimentServiceImpl(ExperimentRepository repository, Validator validator) {
-        this.repository = repository;
-        this.validator = validator;
-    }
 
     @Override
     public Experiment save(Experiment e) {
